@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { rgb, type AnalysisResult } from "@/lib/api";
 import TimelineChart from "./TimelineChart";
 import ConfidenceCurvesChart from "./ConfidenceCurvesChart";
@@ -41,11 +41,16 @@ export default function ResultView({ jobId, result, initialPlotMode = "health" }
 
   const startSec = Number(result.meta.start_sec ?? 0);
   const endSec = Number(result.meta.end_sec ?? startSec + 1);
+  const mediaStartSec = Number(result.meta.media_start_sec ?? 0);
   // Source seconds per second of (possibly slowed) clip playback.
   const timeScale = Number(result.meta.time_scale ?? 1) || 1;
   const replaySpeed = Number(result.meta.replay_speed ?? 1);
   const showBoxLabels = result.meta.show_box_labels === true;
-  const currentAbs = startSec + currentTime * timeScale;
+  const mediaToAbs = useCallback(
+    (mediaTime: number) => startSec + (mediaTime - mediaStartSec) * timeScale,
+    [mediaStartSec, startSec, timeScale],
+  );
+  const currentAbs = mediaToAbs(currentTime);
   const videoSrc =
     result.video ||
     (typeof result.meta.source_url === "string" ? result.meta.source_url : "") ||
@@ -55,13 +60,22 @@ export default function ResultView({ jobId, result, initialPlotMode = "health" }
     const v = videoRef.current;
     if (!v) return;
     const onTime = () => setCurrentTime(v.currentTime);
+    const onLoaded = () => {
+      if (mediaStartSec > 0 && Math.abs(v.currentTime - mediaStartSec) > 0.05) {
+        v.currentTime = Math.min(v.duration || mediaStartSec, mediaStartSec);
+      }
+      setCurrentTime(v.currentTime);
+    };
     v.addEventListener("timeupdate", onTime);
     v.addEventListener("seeked", onTime);
+    v.addEventListener("loadedmetadata", onLoaded);
+    onLoaded();
     return () => {
       v.removeEventListener("timeupdate", onTime);
       v.removeEventListener("seeked", onTime);
+      v.removeEventListener("loadedmetadata", onLoaded);
     };
-  }, [jobId]);
+  }, [jobId, mediaStartSec]);
 
   const currentFrame = useMemo(() => {
     const frames = result.frames;
@@ -83,7 +97,9 @@ export default function ResultView({ jobId, result, initialPlotMode = "health" }
     if (!v) return;
     const clipDuration = (endSec - startSec) / timeScale;
     const clipTime = (abs - startSec) / timeScale;
-    v.currentTime = Math.max(0, Math.min(clipDuration, clipTime));
+    const mediaTime = mediaStartSec + clipTime;
+    const mediaEnd = mediaStartSec + clipDuration;
+    v.currentTime = Math.max(mediaStartSec, Math.min(mediaEnd, mediaTime));
   };
 
   useEffect(() => {
@@ -154,7 +170,7 @@ export default function ResultView({ jobId, result, initialPlotMode = "health" }
       const fit = containRect(rect.width, rect.height, srcW, srcH);
       const sx = fit.width / srcW;
       const sy = fit.height / srcH;
-      const frame = frameAtAbs(startSec + mediaTime * timeScale);
+      const frame = frameAtAbs(mediaToAbs(mediaTime));
 
       for (const det of frame?.detections ?? []) {
         drawBox(
@@ -221,7 +237,7 @@ export default function ResultView({ jobId, result, initialPlotMode = "health" }
       video.removeEventListener("loadedmetadata", onLoaded);
       video.removeEventListener("resize", onLoaded);
     };
-  }, [frameAtAbs, result.class_colors, result.meta, showBoxLabels, startSec, timeScale]);
+  }, [frameAtAbs, mediaStartSec, mediaToAbs, result.class_colors, result.meta, showBoxLabels, startSec, timeScale]);
 
   return (
     <div className="flex flex-col gap-4">

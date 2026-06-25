@@ -30,10 +30,12 @@ export default function CompareView({ runA, runB, onExit }: Props) {
 
   const startA = Number(runA.result.meta.start_sec ?? 0);
   const endA   = Number(runA.result.meta.end_sec   ?? startA + 1);
+  const mediaStartA = Number(runA.result.meta.media_start_sec ?? 0);
   const tsA    = Number(runA.result.meta.time_scale ?? 1) || 1;
 
   const startB = Number(runB.result.meta.start_sec ?? 0);
   const endB   = Number(runB.result.meta.end_sec   ?? startB + 1);
+  const mediaStartB = Number(runB.result.meta.media_start_sec ?? 0);
   const tsB    = Number(runB.result.meta.time_scale ?? 1) || 1;
 
   const currentAbsA = startA + currentClipTime * tsA;
@@ -45,9 +47,13 @@ export default function CompareView({ runA, runB, onExit }: Props) {
     const vB = videoRefB.current;
     if (!vA) return;
     const onTime = () => {
-      setCurrentClipTime(vA.currentTime);
-      if (vB && Math.abs(vB.currentTime - vA.currentTime) > 0.15) {
-        vB.currentTime = vA.currentTime;
+      const clipTime = Math.max(0, vA.currentTime - mediaStartA);
+      setCurrentClipTime(clipTime);
+      if (vB) {
+        const targetB = mediaStartB + clipTime;
+        if (Math.abs(vB.currentTime - targetB) > 0.15) {
+          vB.currentTime = targetB;
+        }
       }
     };
     const onEnded = () => setPlaying(false);
@@ -59,7 +65,7 @@ export default function CompareView({ runA, runB, onExit }: Props) {
       vA.removeEventListener("seeked", onTime);
       vA.removeEventListener("ended", onEnded);
     };
-  }, []);
+  }, [mediaStartA, mediaStartB]);
 
   const togglePlay = () => {
     const vA = videoRefA.current;
@@ -70,7 +76,7 @@ export default function CompareView({ runA, runB, onExit }: Props) {
       vB?.pause();
       setPlaying(false);
     } else {
-      if (vB) vB.currentTime = vA.currentTime;
+      if (vB) vB.currentTime = mediaStartB + Math.max(0, vA.currentTime - mediaStartA);
       const plays = [vA.play(), vB ? vB.play() : null].filter(Boolean) as Promise<void>[];
       void Promise.all(plays);
       setPlaying(true);
@@ -80,8 +86,8 @@ export default function CompareView({ runA, runB, onExit }: Props) {
   const seekBoth = (clipTime: number) => {
     const vA = videoRefA.current;
     const vB = videoRefB.current;
-    if (vA) vA.currentTime = clipTime;
-    if (vB) vB.currentTime = clipTime;
+    if (vA) vA.currentTime = mediaStartA + clipTime;
+    if (vB) vB.currentTime = mediaStartB + clipTime;
     setCurrentClipTime(clipTime);
   };
 
@@ -167,6 +173,7 @@ function VideoPane({ result, videoRef, currentClipTime, label }: VideoPaneProps)
   const currentClipTimeRef = useRef(currentClipTime);
 
   const startSec    = Number(result.meta.start_sec ?? 0);
+  const mediaStartSec = Number(result.meta.media_start_sec ?? 0);
   const timeScale   = Number(result.meta.time_scale ?? 1) || 1;
   const showLabels  = result.meta.show_box_labels === true;
   const videoSrc    =
@@ -218,7 +225,7 @@ function VideoPane({ result, videoRef, currentClipTime, label }: VideoPaneProps)
       const fit  = containRect(rect.width, rect.height, srcW, srcH);
       const sx   = fit.width / srcW;
       const sy   = fit.height / srcH;
-      const abs  = startSec + mediaTime * timeScale;
+      const abs  = startSec + (mediaTime - mediaStartSec) * timeScale;
       const frame = frameAtAbs(abs);
       for (const det of frame?.detections ?? []) {
         drawBox(ctx, det.box, sx, sy, fit.x, fit.y,
@@ -242,7 +249,12 @@ function VideoPane({ result, videoRef, currentClipTime, label }: VideoPaneProps)
     };
 
     const onSeeked  = () => draw(video.currentTime);
-    const onLoaded  = () => draw(video.currentTime);
+    const onLoaded  = () => {
+      if (mediaStartSec > 0 && Math.abs(video.currentTime - mediaStartSec) > 0.05) {
+        video.currentTime = Math.min(video.duration || mediaStartSec, mediaStartSec);
+      }
+      draw(video.currentTime);
+    };
     const resize    = new ResizeObserver(() => draw(video.currentTime));
 
     draw(video.currentTime);
@@ -261,7 +273,7 @@ function VideoPane({ result, videoRef, currentClipTime, label }: VideoPaneProps)
       video.removeEventListener("resize",         onLoaded);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [frameAtAbs, result.class_colors, result.meta, showLabels, startSec, timeScale]);
+  }, [frameAtAbs, mediaStartSec, result.class_colors, result.meta, showLabels, startSec, timeScale]);
 
   return (
     <div className="flex flex-col gap-2">

@@ -12,6 +12,7 @@ type Props = {
   scenes: Scene[];
   activeSceneId?: string | null;
   onSeek: (t: number) => void;
+  onSceneActivate?: (scene: Scene) => void;
   onSelect: (sel: Range | null) => void;
 };
 
@@ -29,6 +30,7 @@ export default function ClipperTimeline({
   scenes,
   activeSceneId,
   onSeek,
+  onSceneActivate,
   onSelect,
 }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -319,8 +321,11 @@ export default function ClipperTimeline({
               title={`${sc.name} (${sc.start}–${sc.end}s)`}
               onPointerDown={(e) => {
                 e.stopPropagation();
-                onSeek(sc.start);
-                onSelect({ start: sc.start, end: sc.end });
+                if (onSceneActivate) onSceneActivate(sc);
+                else {
+                  onSeek(sc.start);
+                  onSelect({ start: sc.start, end: sc.end });
+                }
               }}
             >
               <span className="truncate px-1 leading-7 text-slate-100">{sc.name}</span>

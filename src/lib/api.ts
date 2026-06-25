@@ -193,15 +193,15 @@ const MODELS: ModelInfo[] = [
 
 const RAW_LEVEL_VIDEO: Record<number, LevelVideoAsset> = {
   1: {
-    src: "/videos/output-640.mp4",
-    filename: "output.mp4",
-    duration_sec: 13.76,
+    src: "/videos/level-1-2024.mp4",
+    filename: "Lvl1.mp4",
+    duration_sec: 264.68,
     fps: 25,
-    width: 640,
-    height: 472,
+    width: 2024,
+    height: 1308,
   },
   2: {
-    src: "/videos/vid-sample-640.mp4",
+    src: "/videos/level-2-640.mp4",
     filename: "vid.mp4",
     duration_sec: 1080.16,
     fps: 25,
@@ -209,7 +209,7 @@ const RAW_LEVEL_VIDEO: Record<number, LevelVideoAsset> = {
     height: 414,
   },
   3: {
-    src: "/videos/level-3-sample-640.mp4",
+    src: "/videos/level-3-640.mp4",
     filename: "Level_3.mp4",
     duration_sec: 1795.44,
     fps: 25,
@@ -325,19 +325,13 @@ async function videoInfoForLevel(level: number, scenes: Scene[]): Promise<VideoI
   };
 }
 
-function closestSceneFor(req: AnalyzeRequest, scenes: Scene[]): Scene | null {
+function clipSceneFor(req: AnalyzeRequest, scenes: Scene[]): Scene | null {
   const level = levelFromVideo(req.video);
   if (level == null) return null;
   const reqStart = req.start_sec;
   const reqEnd = req.start_sec + req.duration_sec;
   const candidates = scenes.filter((s) => s.level === level && s.clip_src);
-  return (
-    candidates.find((s) => reqStart >= s.start - 0.75 && reqEnd <= s.end + 0.75) ??
-    candidates
-      .map((s) => ({ scene: s, delta: Math.abs(s.start - reqStart) + Math.abs(s.end - reqEnd) }))
-      .sort((a, b) => a.delta - b.delta)[0]?.scene ??
-    null
-  );
+  return candidates.find((s) => reqStart >= s.start - 0.75 && reqEnd <= s.end + 0.75) ?? null;
 }
 
 function levelFromVideo(video: string): number | null {
@@ -358,8 +352,8 @@ async function resolveAnalyzeSource(req: AnalyzeRequest): Promise<AnalyzeSource>
     };
   }
   const scenes = await allScenes();
-  const scene = closestSceneFor(req, scenes);
-  if (scene) return sceneToSource(scene);
+  const scene = clipSceneFor(req, scenes);
+  if (scene) return sceneToSource(scene, req.start_sec);
   const level = levelFromVideo(req.video);
   if (level != null) {
     const asset = RAW_LEVEL_VIDEO[level];
@@ -368,7 +362,7 @@ async function resolveAnalyzeSource(req: AnalyzeRequest): Promise<AnalyzeSource>
       label: `Level ${level} preview`,
       level,
       originalStartSec: req.start_sec,
-      mediaStartSec: 0,
+      mediaStartSec: req.start_sec,
     };
   }
   return {

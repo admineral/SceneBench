@@ -1,13 +1,24 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, type Scene } from "@/lib/api";
+import {
+  ASSET_CACHE_NAME,
+  cacheAsset,
+  canUseAssetCache,
+  checkAsset,
+  formatBytes,
+  type AssetState,
+  type AssetTarget,
+} from "@/lib/asset-cache";
 import ClipperTimeline from "../components/ClipperTimeline";
 import SceneInference from "../components/SceneInference";
 
 type Range = { start: number; end: number };
+type VideoLoadStatus = "idle" | "loading" | "metadata" | "ready" | "error";
 
 const LEVELS = [1, 2, 3];
+const SCENE_VIDEO_CACHE_META_KEY = "rv2.sceneLibraryVideoCache";
 const QUICK_LABELS = [
   "car_front",
   "car_rear",
@@ -27,6 +38,7 @@ export default function ScenesPage() {
   const [currentTime, setCurrentTime] = useState(0);
   const [selection, setSelection] = useState<Range | null>(null);
   const [scenes, setScenes] = useState<Scene[]>([]);
+  const [previewScene, setPreviewScene] = useState<Scene | null>(null);
 
   // editor form
   const [name, setName] = useState("");
@@ -57,6 +69,150 @@ export default function ScenesPage() {
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const previewRaf = useRef<number>(0);
+  const pendingSeek = useRef<number | null>(null);
+  const pendingPreviewRange = useRef<Range | null>(null);
+  const previewSrc = previewScene?.clip_src ?? api.rawVideoUrl(level);
+  const levelVideoTarget = useMemo<AssetTarget>(
+    () => ({
+      id: `scene-library-level-video:${level}`,
+      label: `Level ${level} full video`,
+      url: api.rawVideoUrl(level),
+      kind: "video",
+    }),
+    [level],
+  );
+  const [levelVideoCache, setLevelVideoCache] = useState<AssetState>({ status: "idle" });
+  const [cacheBusy, setCacheBusy] = useState(false);
+  const [cacheCheckedAt, setCacheCheckedAt] = useState<number | null>(null);
+  const [cacheStoredAt, setCacheStoredAt] = useState<number | null>(null);
+  const [videoLoadStatus, setVideoLoadStatus] = useState<VideoLoadStatus>("idle");
+
+  const mediaToTimelineTime = useCallback(
+    (mediaTime: number) => (previewScene ? previewScene.start + mediaTime : mediaTime),
+    [previewScene],
+  );
+
+  const timelineToMediaTime = useCallback(
+    (timelineTime: number) => (previewScene ? timelineTime - previewScene.start : timelineTime),
+    [previewScene],
+  );
+
+  const applyTimelineSeekToVideo = useCallback(
+    (timelineTime: number) => {
+      const v = videoRef.current;
+      if (!v) return false;
+      const fallbackDuration = previewScene
+        ? previewScene.duration_sec ?? Math.max(0.1, previewScene.end - previewScene.start)
+        : duration;
+      const mediaDuration = v.duration && isFinite(v.duration) ? v.duration : fallbackDuration;
+      const mediaTime = Math.max(0, Math.min(mediaDuration || timelineTime, timelineToMediaTime(timelineTime)));
+      v.currentTime = mediaTime;
+      setCurrentTime(previewScene ? previewScene.start + mediaTime : timelineTime);
+      return true;
+    },
+    [duration, previewScene, timelineToMediaTime],
+  );
+
+  const playRangeOnCurrentSource = useCallback(
+    (range: Range) => {
+      const v = videoRef.current;
+      if (!v) return;
+      const fallbackDuration = previewScene
+        ? previewScene.duration_sec ?? Math.max(0.1, previewScene.end - previewScene.start)
+        : duration;
+      const mediaDuration = v.duration && isFinite(v.duration) ? v.duration : fallbackDuration;
+      const start = Math.max(0, Math.min(mediaDuration || range.start, timelineToMediaTime(range.start)));
+      const end = Math.max(start + 0.05, Math.min(mediaDuration || range.end, timelineToMediaTime(range.end)));
+      if (!(end > start)) return;
+
+      cancelAnimationFrame(previewRaf.current);
+      previewRaf.current = 0;
+
+      const runStopLoop = () => {
+        const tick = () => {
+          if (v.paused || v.ended || v.currentTime >= end) {
+            if (!v.paused) v.pause();
+            previewRaf.current = 0;
+            return;
+          }
+          previewRaf.current = requestAnimationFrame(tick);
+        };
+        previewRaf.current = requestAnimationFrame(tick);
+      };
+
+      const begin = () => {
+        v.play()
+          .then(runStopLoop)
+          .catch(() => runStopLoop());
+      };
+      if (Math.abs(v.currentTime - start) < 0.03) {
+        begin();
+      } else {
+        const onSeeked = () => {
+          v.removeEventListener("seeked", onSeeked);
+          begin();
+        };
+        v.addEventListener("seeked", onSeeked);
+        v.currentTime = start;
+      }
+    },
+    [duration, previewScene, timelineToMediaTime],
+  );
+
+  const clipForRange = useCallback(
+    (range: Range) =>
+      scenes.find(
+        (sc) =>
+          sc.level === level &&
+          !!sc.clip_src &&
+          range.start >= sc.start - 0.05 &&
+          range.end <= sc.end + 0.05,
+      ) ?? null,
+    [level, scenes],
+  );
+
+  const checkLevelVideoCache = useCallback(async () => {
+    setLevelVideoCache({ status: "checking" });
+    setCacheStoredAt(readCacheTimestamp(levelVideoTarget.url));
+    const state = await checkAsset(levelVideoTarget);
+    setLevelVideoCache(state);
+    setCacheCheckedAt(Date.now());
+    if (state.status !== "cached") {
+      setCacheStoredAt(null);
+    }
+  }, [levelVideoTarget]);
+
+  const cacheLevelVideo = async () => {
+    setCacheBusy(true);
+    try {
+      setLevelVideoCache({ status: "loading", message: "Starting download..." });
+      const state = await cacheAsset(levelVideoTarget, setLevelVideoCache);
+      setLevelVideoCache(state);
+      if (state.status === "cached") {
+        const now = Date.now();
+        writeCacheTimestamp(levelVideoTarget.url, now);
+        setCacheStoredAt(now);
+      }
+      setCacheCheckedAt(Date.now());
+    } finally {
+      setCacheBusy(false);
+    }
+  };
+
+  const resetLevelVideoCache = async () => {
+    setCacheBusy(true);
+    try {
+      if (canUseAssetCache()) {
+        const cache = await caches.open(ASSET_CACHE_NAME);
+        await cache.delete(levelVideoTarget.url);
+      }
+      removeCacheTimestamp(levelVideoTarget.url);
+      setCacheStoredAt(null);
+      await checkLevelVideoCache();
+    } finally {
+      setCacheBusy(false);
+    }
+  };
 
   const loadScenes = useCallback(async () => {
     try {
@@ -70,6 +226,14 @@ export default function ScenesPage() {
     loadScenes();
   }, [loadScenes]);
 
+  useEffect(() => {
+    void checkLevelVideoCache();
+  }, [checkLevelVideoCache]);
+
+  useEffect(() => {
+    setVideoLoadStatus("idle");
+  }, [previewSrc]);
+
   // Reset preview state when switching level.
   useEffect(() => {
     cancelAnimationFrame(previewRaf.current);
@@ -77,6 +241,7 @@ export default function ScenesPage() {
     setDuration(0);
     setCurrentTime(0);
     setSelection(null);
+    setPreviewScene(null);
     setAnalyzeFor(null);
     setName("");
     setLabels([]);
@@ -129,17 +294,29 @@ export default function ScenesPage() {
     const v = videoRef.current;
     if (!v) return;
     let raf = 0;
-    const onTime = () => setCurrentTime(v.currentTime);
+    const onTime = () => setCurrentTime(mediaToTimelineTime(v.currentTime));
     const onMeta = () => {
-      if (v.duration && isFinite(v.duration)) {
+      if (!previewScene && v.duration && isFinite(v.duration)) {
         setDuration((cur) => Math.max(cur, v.duration));
+      }
+      const target = pendingSeek.current;
+      if (target != null) {
+        pendingSeek.current = null;
+        applyTimelineSeekToVideo(target);
+      } else {
+        onTime();
+      }
+      const range = pendingPreviewRange.current;
+      if (range) {
+        pendingPreviewRange.current = null;
+        window.setTimeout(() => playRangeOnCurrentSource(range), 0);
       }
     };
     // The native `timeupdate` event only fires a few times per second, so the
     // readout jumps while playing. Poll currentTime every animation frame during
     // playback for a smooth, frame-granular display.
     const tick = () => {
-      setCurrentTime(v.currentTime);
+      setCurrentTime(mediaToTimelineTime(v.currentTime));
       if (!v.paused && !v.ended) raf = requestAnimationFrame(tick);
     };
     const onPlay = () => {
@@ -148,7 +325,7 @@ export default function ScenesPage() {
     };
     const onPause = () => {
       cancelAnimationFrame(raf);
-      setCurrentTime(v.currentTime);
+      setCurrentTime(mediaToTimelineTime(v.currentTime));
     };
     onMeta(); // metadata may already be loaded before listeners attach
     v.addEventListener("timeupdate", onTime);
@@ -171,15 +348,45 @@ export default function ScenesPage() {
       v.removeEventListener("pause", onPause);
       v.removeEventListener("ended", onPause);
     };
-  }, [level]);
+  }, [applyTimelineSeekToVideo, level, mediaToTimelineTime, playRangeOnCurrentSource, previewScene]);
 
   const seek = (t: number) => {
-    const v = videoRef.current;
-    if (!v) return;
     const target = Math.max(0, Math.min(duration || t, t));
+    if (
+      previewScene &&
+      (target < previewScene.start - 0.05 || target > previewScene.end + 0.05)
+    ) {
+      pendingSeek.current = target;
+      setPreviewScene(null);
+      setCurrentTime(target);
+      return;
+    }
     setCurrentTime(target);
-    const mediaDuration = v.duration && isFinite(v.duration) ? v.duration : duration;
-    v.currentTime = Math.max(0, Math.min(mediaDuration || target, target));
+    applyTimelineSeekToVideo(target);
+  };
+
+  const loadScenePreview = (sc: Scene) => {
+    cancelAnimationFrame(previewRaf.current);
+    previewRaf.current = 0;
+    setSelection({ start: sc.start, end: sc.end });
+    setCurrentTime(sc.start);
+
+    if (sc.clip_src) {
+      if (previewScene?.id === sc.id) {
+        seek(sc.start);
+      } else {
+        pendingSeek.current = sc.start;
+        setPreviewScene(sc);
+      }
+      return;
+    }
+
+    if (previewScene) {
+      pendingSeek.current = sc.start;
+      setPreviewScene(null);
+    } else {
+      seek(sc.start);
+    }
   };
 
   const setIn = () => {
@@ -197,46 +404,15 @@ export default function ScenesPage() {
 
   const previewClip = () => {
     if (!selection) return;
-    const v = videoRef.current;
-    if (!v) return;
-    const start = Math.max(0, selection.start);
-    const end = Math.min(duration || selection.end, selection.end);
-    if (!(end > start)) return;
-
-    // Cancel any preview already in flight.
-    cancelAnimationFrame(previewRaf.current);
-    previewRaf.current = 0;
-
-    // Frame-accurate stop: poll currentTime each frame and pause exactly at `end`.
-    const runStopLoop = () => {
-      const tick = () => {
-        if (v.paused || v.ended || v.currentTime >= end) {
-          if (!v.paused) v.pause();
-          previewRaf.current = 0;
-          return;
-        }
-        previewRaf.current = requestAnimationFrame(tick);
-      };
-      previewRaf.current = requestAnimationFrame(tick);
-    };
-
-    // Seek to the start first and wait for it to land, otherwise the stale
-    // (pre-seek) currentTime can already be >= end and pause us instantly.
-    const begin = () => {
-      v.play()
-        .then(runStopLoop)
-        .catch(() => runStopLoop());
-    };
-    if (Math.abs(v.currentTime - start) < 0.03) {
-      begin();
-    } else {
-      const onSeeked = () => {
-        v.removeEventListener("seeked", onSeeked);
-        begin();
-      };
-      v.addEventListener("seeked", onSeeked);
-      v.currentTime = start;
+    const matchingClip = clipForRange(selection);
+    if (matchingClip && previewScene?.id !== matchingClip.id) {
+      pendingSeek.current = selection.start;
+      pendingPreviewRange.current = selection;
+      setCurrentTime(selection.start);
+      setPreviewScene(matchingClip);
+      return;
     }
+    playRangeOnCurrentSource(selection);
   };
 
   const toggleLabel = (l: string) =>
@@ -296,8 +472,7 @@ export default function ScenesPage() {
     setName(sc.name);
     setLabels(sc.labels);
     setNotes(sc.notes);
-    setSelection({ start: sc.start, end: sc.end });
-    seek(sc.start);
+    loadScenePreview(sc);
   };
 
   const removeScene = async (id: string) => {
@@ -387,13 +562,49 @@ export default function ScenesPage() {
             {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
             <video
               ref={videoRef}
-              key={level}
-              src={api.rawVideoUrl(level)}
+              key={`${level}:${previewScene?.id ?? "raw"}`}
+              src={previewSrc}
               controls
-              preload="metadata"
+              preload={previewScene ? "auto" : "metadata"}
+              onLoadStart={() => setVideoLoadStatus("loading")}
+              onLoadedMetadata={() => setVideoLoadStatus("metadata")}
+              onCanPlay={() => setVideoLoadStatus("ready")}
+              onError={() => setVideoLoadStatus("error")}
               className="max-h-[55vh] w-full bg-black"
             />
           </div>
+          <LevelVideoCachePanel
+            level={level}
+            target={levelVideoTarget}
+            cacheState={levelVideoCache}
+            cacheBusy={cacheBusy}
+            cacheCheckedAt={cacheCheckedAt}
+            cacheStoredAt={cacheStoredAt}
+            videoLoadStatus={videoLoadStatus}
+            activeClipName={previewScene?.name ?? null}
+            onCache={cacheLevelVideo}
+            onReset={resetLevelVideoCache}
+            onRefresh={checkLevelVideoCache}
+          />
+          {previewScene && (
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-xs text-sky-100">
+              <span>
+                Playing saved clip: <span className="font-medium">{previewScene.name}</span>{" "}
+                <span className="font-mono text-sky-200/80">
+                  {previewScene.start.toFixed(2)}–{previewScene.end.toFixed(2)}s
+                </span>
+              </span>
+              <button
+                onClick={() => {
+                  pendingSeek.current = currentTime;
+                  setPreviewScene(null);
+                }}
+                className="rounded border border-sky-400/40 px-2 py-1 text-sky-100 hover:bg-sky-400/10"
+              >
+                Show level video
+              </button>
+            </div>
+          )}
 
           {/* transport */}
           <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -424,6 +635,7 @@ export default function ScenesPage() {
             scenes={scenes}
             activeSceneId={editingId}
             onSeek={seek}
+            onSceneActivate={loadScenePreview}
             onSelect={setSelection}
           />
 
@@ -727,8 +939,7 @@ export default function ScenesPage() {
                     <div className="mt-2 flex gap-2">
                       <button
                         onClick={() => {
-                          seek(sc.start);
-                          setSelection({ start: sc.start, end: sc.end });
+                          loadScenePreview(sc);
                         }}
                         className="rounded border border-slate-700 px-2 py-1 text-xs text-slate-300 hover:bg-slate-800"
                       >
@@ -781,6 +992,157 @@ function Btn({
       {children}
     </button>
   );
+}
+
+function LevelVideoCachePanel({
+  level,
+  target,
+  cacheState,
+  cacheBusy,
+  cacheCheckedAt,
+  cacheStoredAt,
+  videoLoadStatus,
+  activeClipName,
+  onCache,
+  onReset,
+  onRefresh,
+}: {
+  level: number;
+  target: AssetTarget;
+  cacheState: AssetState;
+  cacheBusy: boolean;
+  cacheCheckedAt: number | null;
+  cacheStoredAt: number | null;
+  videoLoadStatus: VideoLoadStatus;
+  activeClipName: string | null;
+  onCache: () => Promise<void>;
+  onReset: () => Promise<void>;
+  onRefresh: () => Promise<void>;
+}) {
+  const cacheLabel = cacheStatusLabel(cacheState);
+  const playerLabel = activeClipName
+    ? `Saved clip active: ${activeClipName}`
+    : `Level video: ${videoLoadStatusLabel(videoLoadStatus)}`;
+
+  return (
+    <div className="rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-xs text-slate-400">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <div className="font-medium text-slate-200">Level {level} video cache</div>
+          <div className="mt-0.5">
+            Only this level is checked or cached: <span className="font-mono text-slate-300">{target.url}</span>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => void onRefresh()}
+            disabled={cacheBusy}
+            className="rounded border border-slate-700 px-2 py-1 text-slate-300 hover:bg-slate-800 disabled:opacity-40"
+          >
+            Refresh
+          </button>
+          <button
+            onClick={() => void onCache()}
+            disabled={cacheBusy || cacheState.status === "cached"}
+            className="rounded border border-sky-700 px-2 py-1 text-sky-300 hover:bg-sky-900/40 disabled:opacity-40"
+          >
+            Cache current level
+          </button>
+          <button
+            onClick={() => void onReset()}
+            disabled={cacheBusy || cacheState.status === "unsupported"}
+            className="rounded border border-red-900/70 px-2 py-1 text-red-300 hover:bg-red-950/40 disabled:opacity-40"
+          >
+            Reset
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-2 grid gap-1 sm:grid-cols-2 lg:grid-cols-4">
+        <MiniStat label="Player" value={playerLabel} />
+        <MiniStat label="Cache" value={cacheLabel} />
+        <MiniStat label="Size" value={formatBytes(cacheState.totalBytes ?? cacheState.loadedBytes)} />
+        <MiniStat label="Cached at" value={cacheStoredAt ? formatDateTime(cacheStoredAt) : "not stored"} />
+      </div>
+      <div className="mt-1 flex flex-wrap justify-between gap-2 text-[11px] text-slate-500">
+        <span>{cacheState.message ?? "Cache Storage keeps the full level video available offline in this browser."}</span>
+        <span>{cacheCheckedAt ? `checked ${formatDateTime(cacheCheckedAt)}` : "not checked yet"}</span>
+      </div>
+    </div>
+  );
+}
+
+function MiniStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded border border-slate-800 bg-slate-950 px-2 py-1">
+      <div className="text-[10px] uppercase tracking-wide text-slate-600">{label}</div>
+      <div className="truncate text-slate-300" title={value}>
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function cacheStatusLabel(state: AssetState): string {
+  if (state.status === "loading") {
+    const total = state.totalBytes ? ` / ${formatBytes(state.totalBytes)}` : "";
+    return `loading ${formatBytes(state.loadedBytes)}${total}`;
+  }
+  if (state.status === "cached") return "stored locally";
+  if (state.status === "reachable") return "reachable, not stored";
+  if (state.status === "checking") return "checking";
+  if (state.status === "unsupported") return "unsupported";
+  if (state.status === "error") return "error";
+  return "idle";
+}
+
+function videoLoadStatusLabel(status: VideoLoadStatus): string {
+  if (status === "loading") return "loading";
+  if (status === "metadata") return "metadata loaded";
+  if (status === "ready") return "ready";
+  if (status === "error") return "error";
+  return "idle";
+}
+
+function formatDateTime(ts: number): string {
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "short",
+    timeStyle: "medium",
+  }).format(new Date(ts));
+}
+
+function readCacheTimestamp(url: string): number | null {
+  if (typeof window === "undefined") return null;
+  const map = readCacheTimestampMap();
+  return typeof map[url] === "number" ? map[url] : null;
+}
+
+function writeCacheTimestamp(url: string, ts: number): void {
+  if (typeof window === "undefined") return;
+  const map = readCacheTimestampMap();
+  map[url] = ts;
+  window.localStorage.setItem(SCENE_VIDEO_CACHE_META_KEY, JSON.stringify(map));
+}
+
+function removeCacheTimestamp(url: string): void {
+  if (typeof window === "undefined") return;
+  const map = readCacheTimestampMap();
+  delete map[url];
+  window.localStorage.setItem(SCENE_VIDEO_CACHE_META_KEY, JSON.stringify(map));
+}
+
+function readCacheTimestampMap(): Record<string, number> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(SCENE_VIDEO_CACHE_META_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    return Object.fromEntries(
+      Object.entries(parsed).filter((entry): entry is [string, number] => typeof entry[1] === "number"),
+    );
+  } catch {
+    return {};
+  }
 }
 
 function round1(n: number): number {

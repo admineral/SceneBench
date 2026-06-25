@@ -87,10 +87,13 @@ export async function analyzeSegmentInBrowser(
   await waitForMetadata(video);
 
   const fps = 25;
-  const clipDuration = Number.isFinite(video.duration) ? video.duration : req.duration_sec;
   const startSec = Math.max(0, req.start_sec);
   const requestedDuration = Math.max(0.1, req.duration_sec);
   const endSec = startSec + requestedDuration;
+  const mediaStartSec = Math.max(0, source.mediaStartSec);
+  const availableDuration = Number.isFinite(video.duration)
+    ? Math.max(0.1, video.duration - mediaStartSec)
+    : requestedDuration;
   const stride = Math.max(1, Math.round(req.frame_stride || 1));
   const sourceWidth = video.videoWidth || 640;
   const sourceHeight = video.videoHeight || 360;
@@ -108,16 +111,16 @@ export async function analyzeSegmentInBrowser(
   const tracks = new TrackStore();
   const healthState: HealthState = { lastByTrack: new Map() };
   const dt = stride / fps;
-  const maxFrames = Math.max(1, Math.ceil(Math.min(clipDuration, requestedDuration) / dt));
+  const maxFrames = Math.max(1, Math.ceil(Math.min(availableDuration, requestedDuration) / dt));
 
   progress(0.04, "Loading model");
   await detectFromCanvas(emptyCanvas(), { confThreshold: 0.99, iouThreshold: req.iou, modelId: req.model });
 
   for (let idx = 0; idx < maxFrames; idx += 1) {
     const rel = idx * dt;
-    if (rel > clipDuration + 0.001 || rel > requestedDuration + 0.001) break;
+    if (rel > availableDuration + 0.001 || rel > requestedDuration + 0.001) break;
     const absTime = startSec + rel;
-    await seekVideo(video, source.mediaStartSec + rel);
+    await seekVideo(video, mediaStartSec + rel);
     ctx.clearRect(0, 0, outWidth, outHeight);
     ctx.drawImage(video, 0, 0, outWidth, outHeight);
 
@@ -172,6 +175,7 @@ export async function analyzeSegmentInBrowser(
     meta: {
       source: source.label,
       source_url: source.src,
+      media_start_sec: mediaStartSec,
       model: req.model,
       conf: req.conf,
       iou: req.iou,
@@ -492,12 +496,12 @@ function yieldToBrowser(): Promise<void> {
   return new Promise((resolve) => window.setTimeout(resolve, 0));
 }
 
-export function sceneToSource(scene: Scene): AnalyzeSource {
+export function sceneToSource(scene: Scene, requestedStartSec = scene.start): AnalyzeSource {
   return {
     src: scene.clip_src ?? `/videos/scenes/level-${scene.level}/${scene.id}.mp4`,
     label: scene.name || `Level ${scene.level} scene`,
     level: scene.level,
     originalStartSec: scene.start,
-    mediaStartSec: 0,
+    mediaStartSec: Math.max(0, requestedStartSec - scene.start),
   };
 }
