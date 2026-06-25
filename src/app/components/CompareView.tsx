@@ -95,9 +95,9 @@ export default function CompareView({ runA, runB, onExit }: Props) {
         </div>
         <button
           onClick={onExit}
-          className="rounded-md border border-slate-700 px-3 py-1 text-xs text-slate-400 hover:text-slate-200 transition"
+          className="rounded-lg border border-slate-600 bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-slate-700 hover:border-slate-500"
         >
-          ← Back
+          ✕ Close comparison
         </button>
       </div>
 

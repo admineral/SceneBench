@@ -157,6 +157,7 @@ export default function Home() {
 
   const submit = async (cfg: Settings, label: string) => {
     setError(null);
+    setCompareRuns(null);
     setJob({ id: "", status: "queued", progress: 0, message: "Submitting", error: null });
     try {
       const jobId = await api.analyze(cfg);
@@ -299,7 +300,7 @@ export default function Home() {
                 return (
                   <div
                     key={r.id}
-                    className={`w-64 shrink-0 rounded-xl border p-2.5 transition ${
+                    className={`group w-64 shrink-0 rounded-xl border p-2.5 transition ${
                       isComparing
                         ? "border-violet-500/70 bg-violet-500/10"
                         : selectedRun?.id === r.id
@@ -307,6 +308,21 @@ export default function Home() {
                           : "border-slate-800"
                     }`}
                   >
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const next = history.filter((x) => x.id !== r.id);
+                          setHistory(next);
+                          if (selectedRunId === r.id) setSelectedRunId(next[0]?.id ?? null);
+                          if (compareRuns?.a.id === r.id || compareRuns?.b.id === r.id) setCompareRuns(null);
+                        }}
+                        className="absolute -right-1 -top-1 hidden rounded-full border border-slate-700 bg-slate-900 px-1.5 py-0.5 text-[10px] text-slate-500 transition hover:border-red-600 hover:text-red-400 group-hover:flex"
+                        title="Remove this run"
+                      >
+                        ✕
+                      </button>
                     <button
                       onClick={() => { setSelectedRunId(r.id); setCompareRuns(null); }}
                       className="w-full text-left"
@@ -330,9 +346,10 @@ export default function Home() {
                         />
                       </div>
                     </button>
+                    </div>
                     {partner && (
                       <button
-                        onClick={() => setCompareRuns({ a: r, b: partner })}
+                        onClick={() => setCompareRuns(isComparing ? null : { a: r, b: partner })}
                         className={`mt-2 w-full rounded-md border px-2 py-1 text-[11px] font-medium transition ${
                           isComparing
                             ? "border-violet-500/60 bg-violet-500/15 text-violet-300"
