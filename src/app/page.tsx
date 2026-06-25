@@ -13,7 +13,7 @@ import ResultView from "./components/ResultView";
 import ConfidenceSparkline from "./components/ConfidenceSparkline";
 import AssetDebugPanel from "./components/AssetDebugPanel";
 import { readModelPrefs } from "@/lib/prefs";
-import { loadHistory, saveHistory, type RunRecord } from "@/lib/history";
+import { loadDemoHistory, loadHistory, saveHistory, type RunRecord } from "@/lib/history";
 
 function levelFromVideo(video: string): number | null {
   const m = /^builtin:(\d+)$/.exec(video);
@@ -39,6 +39,8 @@ const DEFAULT_SETTINGS: Settings = {
   replay_speed: 1,
 };
 
+const IS_DEV = process.env.NODE_ENV === "development";
+
 export default function Home() {
   const [models, setModels] = useState<ModelInfo[]>([]);
   const [videos, setVideos] = useState<VideoInfo[]>([]);
@@ -50,6 +52,7 @@ export default function Home() {
   const [activeSceneName, setActiveSceneName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [demoSaveStatus, setDemoSaveStatus] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hydrated = useRef(false);
 
@@ -57,12 +60,23 @@ export default function Home() {
 
   // Restore persisted run history once on the client (avoids SSR mismatch).
   useEffect(() => {
-    const h = loadHistory();
-    if (h.length > 0) {
-      setHistory(h);
-      setSelectedRunId(h[0].id);
+    let cancelled = false;
+
+    async function restoreHistory() {
+      const local = loadHistory();
+      const restored = local.length > 0 ? local : await loadDemoHistory();
+      if (cancelled) return;
+      if (restored.length > 0) {
+        setHistory(restored);
+        setSelectedRunId(restored[0].id);
+      }
+      hydrated.current = true;
     }
-    hydrated.current = true;
+
+    void restoreHistory();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Persist whenever history changes (but not before the initial restore).
@@ -180,6 +194,23 @@ export default function Home() {
   };
 
   const handleAnalyze = () => submit(settings, activeSceneName ?? segmentLabel(settings));
+
+  const saveCurrentHistoryAsDemo = async () => {
+    if (!IS_DEV || history.length === 0) return;
+    setDemoSaveStatus("Saving demo history...");
+    try {
+      const res = await fetch("/api/dev/demo-history", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ history }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { count?: number; path?: string; error?: string };
+      if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
+      setDemoSaveStatus(`Saved ${data.count ?? history.length} runs to ${data.path ?? "public/demo-runs/history.json"}.`);
+    } catch (err) {
+      setDemoSaveStatus(`Could not save demo history: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  };
 
   const loadScene = (scene: Scene): Settings => {
     const cfg: Settings = {
@@ -341,16 +372,32 @@ export default function Home() {
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Run history ({history.length})
                 </h3>
-                <button
-                  onClick={() => {
-                    setHistory([]);
-                    setSelectedRunId(null);
-                  }}
-                  className="text-[11px] text-slate-500 hover:text-slate-300"
-                >
-                  Clear
-                </button>
+                <div className="flex items-center gap-2">
+                  {IS_DEV && (
+                    <button
+                      onClick={saveCurrentHistoryAsDemo}
+                      className="text-[11px] text-sky-400 hover:text-sky-300"
+                      title="Write current local run history to public/demo-runs/history.json"
+                    >
+                      Save demo
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setHistory([]);
+                      setSelectedRunId(null);
+                    }}
+                    className="text-[11px] text-slate-500 hover:text-slate-300"
+                  >
+                    Clear
+                  </button>
+                </div>
               </div>
+              {IS_DEV && demoSaveStatus && (
+                <p className="mb-2 rounded border border-slate-800 bg-slate-950/50 px-2 py-1 text-[11px] text-slate-400">
+                  {demoSaveStatus}
+                </p>
+              )}
               <div className="flex gap-3 overflow-x-auto pb-1">
                 {history.map((r) => (
                   <button

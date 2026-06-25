@@ -20,6 +20,7 @@ export type RunRecord = {
 
 const KEY = "rv2.runHistory";
 const MAX_RUNS = 20;
+const DEMO_HISTORY_URL = "/demo-runs/history.json";
 
 export function loadHistory(): RunRecord[] {
   if (typeof window === "undefined") return [];
@@ -28,6 +29,19 @@ export function loadHistory(): RunRecord[] {
     if (!raw) return [];
     const arr = JSON.parse(raw) as unknown;
     return Array.isArray(arr) ? (arr as RunRecord[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function loadDemoHistory(): Promise<RunRecord[]> {
+  if (typeof window === "undefined") return [];
+  try {
+    const res = await fetch(DEMO_HISTORY_URL, { cache: "no-store" });
+    if (!res.ok) return [];
+    const data = (await res.json()) as unknown;
+    const list = Array.isArray(data) ? data : isRecord(data) && Array.isArray(data.history) ? data.history : [];
+    return list.slice(0, MAX_RUNS) as RunRecord[];
   } catch {
     return [];
   }
@@ -51,4 +65,8 @@ export function saveHistory(history: RunRecord[]): void {
   } catch {
     /* ignore */
   }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }

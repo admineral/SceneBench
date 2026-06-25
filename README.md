@@ -120,6 +120,18 @@ This includes:
 
 Large assets are not stored in `localStorage`. Models, WASM files, and clips use browser HTTP cache and optional Cache Storage via the debug panel.
 
+## Demo Run History
+
+If `localStorage` is empty, the app tries to load bundled example runs from:
+
+```text
+public/demo-runs/history.json
+```
+
+During local development, run a few analyses, then click `Save demo` in the Run History header. This writes your current local run history into `public/demo-runs/history.json`, so incognito windows and first-time users can see example benchmark runs immediately.
+
+The `Save demo` button only appears in `npm run dev`; production users cannot write files to the deployed app.
+
 ## Models And Runtime
 
 ONNX models live here:
