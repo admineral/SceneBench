@@ -204,7 +204,7 @@ export default function AssetDebugPanel({
   const progress = targets.length > 0 ? (readyCount / targets.length) * 100 : 0;
 
   return (
-    <div className="mt-5 border-t border-slate-800 pt-4">
+    <div>
       <div className="mb-2 flex items-center justify-between gap-2">
         <div>
           <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">

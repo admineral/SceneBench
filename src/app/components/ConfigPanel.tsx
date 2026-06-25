@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { ModelInfo, VideoInfo } from "@/lib/api";
+import type { ModelInfo, Scene, VideoInfo } from "@/lib/api";
 import { useModelPrefs } from "@/lib/prefs";
 import ModelPicker from "./ModelPicker";
 import ModelDetails from "./ModelDetails";
@@ -28,96 +28,99 @@ export type Settings = {
 type Props = {
   models: ModelInfo[];
   videos: VideoInfo[];
+  scenes: Scene[];
   settings: Settings;
+  activeSceneName: string | null;
   onChange: (next: Partial<Settings>) => void;
   onUpload: (file: File) => Promise<void>;
   onAnalyze: () => void;
+  onLoadScene: (scene: Scene) => void;
+  onRunScene: (scene: Scene) => void;
   busy: boolean;
 };
 
 export default function ConfigPanel({
   models,
   videos,
+  scenes,
   settings,
+  activeSceneName,
   onChange,
   onUpload,
   onAnalyze,
+  onLoadScene,
+  onRunScene,
   busy,
 }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const { prefs, setDefaults } = useModelPrefs();
 
-  const defaultModelLabel =
-    models.find((m) => m.id === prefs.defaultModel)?.label ??
-    (prefs.defaultModel ? prefs.defaultModel : "first model");
-  const isCurrentDefault =
-    prefs.defaultModel === settings.model && prefs.defaultConf === settings.conf;
-
-  const selectedVideo = videos.find((v) => v.id === settings.video);
   const selectedModel = models.find((m) => m.id === settings.model);
+  const selectedVideo = videos.find((v) => v.id === settings.video);
+  const builtinVideos = videos.filter((v) => v.source === "builtin");
   const maxStart = selectedVideo?.duration_sec
     ? Math.max(0, Math.floor(selectedVideo.duration_sec - 1))
     : undefined;
+  const isCurrentDefault =
+    prefs.defaultModel === settings.model && prefs.defaultConf === settings.conf;
 
   return (
-    <div className="flex flex-col gap-5">
-      <Section title="Source">
-        <Field label="Model">
-          <ModelPicker
-            models={models}
-            value={settings.model}
-            onChange={(id) => onChange({ model: id })}
-            selectClassName="input min-w-0 flex-1"
-          />
-          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
-            <button
-              type="button"
-              onClick={() => setDefaults(settings.model, settings.conf)}
-              disabled={!settings.model || isCurrentDefault}
-              className="rounded border border-slate-700 px-2 py-0.5 text-slate-300 transition hover:bg-slate-800 disabled:opacity-40"
-              title="Use this model + confidence as the default"
-            >
-              {isCurrentDefault ? "✓ Current is default" : "Set as default"}
-            </button>
-            <span>
-              Default: <span className="text-slate-300">{defaultModelLabel}</span> · conf{" "}
-              <span className="font-mono text-slate-300">{prefs.defaultConf.toFixed(2)}</span>
-            </span>
-          </div>
-          <ModelDetails model={selectedModel} />
-        </Field>
-
-        <Field label="Video">
-          <select
-            className="input"
-            value={settings.video}
-            onChange={(e) => onChange({ video: e.target.value })}
+    <div className="flex flex-col gap-4">
+      {/* Model */}
+      <div>
+        <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
+          Model
+        </p>
+        <ModelPicker
+          models={models}
+          value={settings.model}
+          onChange={(id) => onChange({ model: id })}
+        />
+        {settings.model && !isCurrentDefault && (
+          <button
+            type="button"
+            onClick={() => setDefaults(settings.model, settings.conf)}
+            className="mt-1 text-[11px] text-slate-500 hover:text-slate-300"
           >
-            {videos.length === 0 && <option value="">No videos found</option>}
-            {videos.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.label}
-              </option>
-            ))}
-          </select>
-          <div className="mt-1 flex items-center justify-between text-[11px] text-slate-500">
-            <span>
-              {selectedVideo?.duration_sec != null
-                ? `${selectedVideo.width}×${selectedVideo.height} · ${fmt(
-                    selectedVideo.duration_sec,
-                  )} · ${selectedVideo.fps}fps`
-                : "—"}
-            </span>
+            Set as default
+          </button>
+        )}
+        <ModelDetails model={selectedModel} />
+      </div>
+
+      {/* Video level buttons */}
+      <div>
+        <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
+          Video
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {builtinVideos.map((v) => (
             <button
+              key={v.id}
               type="button"
-              className="text-sky-400 hover:text-sky-300 disabled:opacity-50"
-              disabled={uploading}
-              onClick={() => fileRef.current?.click()}
+              onClick={() => onChange({ video: v.id })}
+              className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition ${
+                settings.video === v.id
+                  ? "border-sky-500/60 bg-sky-500/15 text-sky-300"
+                  : "border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200"
+              }`}
             >
-              {uploading ? "Uploading…" : "Upload video"}
+              {v.label.split(" - ")[0]}
             </button>
-          </div>
+          ))}
+          <button
+            type="button"
+            disabled={uploading}
+            onClick={() => fileRef.current?.click()}
+            className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition disabled:opacity-50 ${
+              selectedVideo?.source === "upload"
+                ? "border-sky-500/60 bg-sky-500/15 text-sky-300"
+                : "border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200"
+            }`}
+          >
+            {uploading ? "Uploading…" : "Upload"}
+          </button>
           <input
             ref={fileRef}
             type="file"
@@ -135,10 +138,71 @@ export default function ConfigPanel({
               }
             }}
           />
-        </Field>
-      </Section>
+        </div>
+        {selectedVideo && (
+          <p className="mt-1 text-[11px] text-slate-500">
+            {selectedVideo.duration_sec != null
+              ? `${selectedVideo.width}×${selectedVideo.height} · ${fmt(selectedVideo.duration_sec)} · ${selectedVideo.fps}fps`
+              : selectedVideo.label}
+          </p>
+        )}
+      </div>
 
-      <Section title="Segment">
+      {/* Saved scenes */}
+      <div>
+        <div className="mb-1.5 flex items-center justify-between">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Saved scenes
+          </p>
+          <a href="/scenes" className="text-[11px] text-sky-400 hover:text-sky-300">
+            Manage →
+          </a>
+        </div>
+        {scenes.length === 0 ? (
+          <p className="text-xs text-slate-500">No saved scenes yet.</p>
+        ) : (
+          <ul className="flex max-h-56 flex-col gap-1 overflow-y-auto pr-1">
+            {scenes.map((sc) => {
+              const isActive =
+                activeSceneName === sc.name &&
+                settings.video === `builtin:${sc.level}` &&
+                Math.round(settings.start_sec) === Math.round(sc.start);
+              return (
+                <li
+                  key={sc.id}
+                  className={`flex items-center gap-2 rounded-lg border p-2 ${
+                    isActive
+                      ? "border-sky-500/50 bg-sky-500/5"
+                      : "border-slate-800"
+                  }`}
+                >
+                  <button
+                    onClick={() => onLoadScene(sc)}
+                    className="min-w-0 flex-1 text-left"
+                  >
+                    <div className="truncate text-sm text-slate-100">
+                      {sc.name || `scene @ ${sc.start.toFixed(1)}s`}
+                    </div>
+                    <div className="font-mono text-[11px] text-slate-500">
+                      L{sc.level} · {sc.start.toFixed(1)}–{sc.end.toFixed(1)}s
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => onRunScene(sc)}
+                    disabled={busy}
+                    className="shrink-0 rounded-md border border-sky-700 px-2 py-1 text-xs text-sky-300 transition hover:bg-sky-900/40 disabled:opacity-40"
+                  >
+                    ▶ Run
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+
+      {/* Collapsible: Segment */}
+      <CollapsibleSection title="Segment">
         <NumberField
           label="Start (s)"
           value={settings.start_sec}
@@ -177,13 +241,11 @@ export default function ConfigPanel({
             <option value={0.25}>0.25× (quarter speed)</option>
             <option value={0.1}>0.1× (slow motion)</option>
           </select>
-          <p className="mt-1 text-[11px] text-slate-500">
-            Lower = slower replay, so each frame stays on screen longer.
-          </p>
         </Field>
-      </Section>
+      </CollapsibleSection>
 
-      <Section title="Detector">
+      {/* Collapsible: Detector */}
+      <CollapsibleSection title="Detector">
         <SliderRow
           label="Confidence"
           value={settings.conf}
@@ -211,9 +273,10 @@ export default function ConfigPanel({
             <option value={1920}>1920 (sharp)</option>
           </select>
         </Field>
-      </Section>
+      </CollapsibleSection>
 
-      <Section title="Repair / Stability">
+      {/* Collapsible: Repair */}
+      <CollapsibleSection title="Repair / Stability">
         <Toggle
           label="Bridge short gaps"
           checked={settings.bridge_gaps}
@@ -256,27 +319,38 @@ export default function ConfigPanel({
           checked={settings.show_box_labels}
           onChange={(v) => onChange({ show_box_labels: v })}
         />
-      </Section>
+      </CollapsibleSection>
 
       <button
         onClick={onAnalyze}
         disabled={busy || !settings.video || !settings.model}
-        className="mt-1 w-full rounded-lg bg-sky-500 px-4 py-2.5 font-semibold text-slate-950 transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-50"
+        className="w-full rounded-lg bg-sky-500 px-4 py-2.5 font-semibold text-slate-950 transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {busy ? "Analyzing…" : "Analyze segment"}
       </button>
-
     </div>
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function CollapsibleSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
   return (
-    <div>
-      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-        {title}
-      </h3>
-      <div className="flex flex-col gap-3">{children}</div>
+    <div className="border-t border-slate-800 pt-3">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-400"
+      >
+        <span>{title}</span>
+        <span className="text-slate-600 text-[10px]">{open ? "▲" : "▼"}</span>
+      </button>
+      {open && <div className="mt-3 flex flex-col gap-3">{children}</div>}
     </div>
   );
 }
@@ -387,9 +461,7 @@ function Toggle({
           }`}
         >
           <span
-            className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition ${
-              checked ? "left-4.5" : "left-0.5"
-            }`}
+            className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition"
             style={{ left: checked ? "1.125rem" : "0.125rem" }}
           />
         </button>

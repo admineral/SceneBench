@@ -10,10 +10,25 @@ import {
 } from "@/lib/api";
 import ConfigPanel, { type Settings } from "./components/ConfigPanel";
 import ResultView from "./components/ResultView";
+import CompareView from "./components/CompareView";
 import ConfidenceSparkline from "./components/ConfidenceSparkline";
 import AssetDebugPanel from "./components/AssetDebugPanel";
 import { readModelPrefs } from "@/lib/prefs";
 import { loadDemoHistory, loadHistory, saveHistory, type RunRecord } from "@/lib/history";
+
+/** Find the best run in history that can be compared to `run` (same clip, different model). */
+function comparablePartner(run: RunRecord, history: RunRecord[]): RunRecord | null {
+  return (
+    history.find(
+      (r) =>
+        r.id !== run.id &&
+        r.level === run.level &&
+        Math.abs(r.start - run.start) <= 2 &&
+        Math.abs(r.end - run.end) <= 2 &&
+        r.model !== run.model,
+    ) ?? null
+  );
+}
 
 function levelFromVideo(video: string): number | null {
   const m = /^builtin:(\d+)$/.exec(video);
@@ -53,15 +68,14 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [demoSaveStatus, setDemoSaveStatus] = useState<string | null>(null);
+  const [compareRuns, setCompareRuns] = useState<{ a: RunRecord; b: RunRecord } | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hydrated = useRef(false);
 
   const selectedRun = history.find((r) => r.id === selectedRunId) ?? history[0] ?? null;
 
-  // Restore persisted run history once on the client (avoids SSR mismatch).
   useEffect(() => {
     let cancelled = false;
-
     async function restoreHistory() {
       const local = loadHistory();
       const restored = local.length > 0 ? local : await loadDemoHistory();
@@ -72,14 +86,10 @@ export default function Home() {
       }
       hydrated.current = true;
     }
-
     void restoreHistory();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
 
-  // Persist whenever history changes (but not before the initial restore).
   useEffect(() => {
     if (!hydrated.current) return;
     saveHistory(history);
@@ -131,7 +141,6 @@ export default function Home() {
   }, []);
 
   const update = (next: Partial<Settings>) => {
-    // Manual edits to the segment detach it from the loaded scene label.
     if (next.video != null || next.start_sec != null || next.duration_sec != null) {
       setActiveSceneName(null);
     }
@@ -247,7 +256,101 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="mx-auto grid max-w-[1500px] grid-cols-1 gap-6 px-6 py-6 lg:grid-cols-[340px_1fr]">
+      {/* Run history — full width */}
+      {history.length > 0 && (
+        <div className="border-b border-slate-800 bg-slate-950/30 px-6 py-3">
+          <div className="mx-auto max-w-[1500px]">
+            <div className="mb-2 flex items-center justify-between">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Run history ({history.length})
+              </h3>
+              <div className="flex items-center gap-3">
+                {IS_DEV && (
+                  <button
+                    onClick={saveCurrentHistoryAsDemo}
+                    className="text-[11px] text-sky-400 hover:text-sky-300"
+                    title="Write current local run history to public/demo-runs/history.json"
+                  >
+                    Save demo
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setHistory([]);
+                    setSelectedRunId(null);
+                  }}
+                  className="text-[11px] text-slate-500 hover:text-slate-300"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+            {IS_DEV && demoSaveStatus && (
+              <p className="mb-2 rounded border border-slate-800 bg-slate-950/50 px-2 py-1 text-[11px] text-slate-400">
+                {demoSaveStatus}
+              </p>
+            )}
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {history.map((r) => {
+                const partner = comparablePartner(r, history);
+                const isComparing =
+                  compareRuns != null &&
+                  ((compareRuns.a.id === r.id) || (compareRuns.b.id === r.id));
+                return (
+                  <div
+                    key={r.id}
+                    className={`w-64 shrink-0 rounded-xl border p-2.5 transition ${
+                      isComparing
+                        ? "border-violet-500/70 bg-violet-500/10"
+                        : selectedRun?.id === r.id
+                          ? "border-sky-500/70 bg-sky-500/10"
+                          : "border-slate-800"
+                    }`}
+                  >
+                    <button
+                      onClick={() => { setSelectedRunId(r.id); setCompareRuns(null); }}
+                      className="w-full text-left"
+                      title={`${r.label} · ${r.model}`}
+                    >
+                      <div className="line-clamp-1 text-sm font-medium leading-snug text-slate-100">
+                        {r.label}
+                      </div>
+                      <div className="mt-0.5 truncate font-mono text-[10px] text-slate-400" title={r.model}>
+                        {r.model.replace(/^Level\s+\d+\s*[-–]\s*/i, "")}
+                      </div>
+                      <div className="mt-0.5 font-mono text-[10px] text-slate-500">
+                        {r.level != null ? `L${r.level} · ` : ""}
+                        {r.start.toFixed(0)}–{r.end.toFixed(0)}s · {new Date(r.at).toLocaleTimeString()}
+                      </div>
+                      <div className="mt-1.5 overflow-hidden rounded-md border border-slate-800/60">
+                        <ConfidenceSparkline
+                          frames={r.result.frames}
+                          classColors={r.result.class_colors}
+                          height={36}
+                        />
+                      </div>
+                    </button>
+                    {partner && (
+                      <button
+                        onClick={() => setCompareRuns({ a: r, b: partner })}
+                        className={`mt-2 w-full rounded-md border px-2 py-1 text-[11px] font-medium transition ${
+                          isComparing
+                            ? "border-violet-500/60 bg-violet-500/15 text-violet-300"
+                            : "border-slate-700 text-slate-400 hover:border-violet-600 hover:text-violet-300"
+                        }`}
+                      >
+                        ⇄ Compare
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <main className="mx-auto grid max-w-[1500px] grid-cols-1 gap-6 px-6 py-6 lg:grid-cols-[320px_1fr]">
         {/* Sidebar */}
         <aside className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4 lg:sticky lg:top-6 lg:h-fit">
           {loadError && (
@@ -262,81 +365,35 @@ export default function Home() {
               </button>
             </div>
           )}
+
           <ConfigPanel
             models={models}
             videos={videos}
+            scenes={scenes}
             settings={settings}
+            activeSceneName={activeSceneName}
             onChange={update}
             onUpload={handleUpload}
             onAnalyze={handleAnalyze}
+            onLoadScene={loadScene}
+            onRunScene={runScene}
             busy={busy}
           />
 
-          <AssetDebugPanel
-            selectedModelId={settings.model}
-            selectedVideoId={settings.video}
-            startSec={settings.start_sec}
-            durationSec={settings.duration_sec}
-            videos={videos}
-            scenes={scenes}
-          />
-
-          <div className="mt-5 border-t border-slate-800 pt-4">
-            <div className="mb-2 flex items-center justify-between">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Saved scenes
-              </h3>
-              <a href="/scenes" className="text-[11px] text-sky-400 hover:text-sky-300">
-                Manage →
-              </a>
-            </div>
-            {scenes.length === 0 ? (
-              <p className="text-xs text-slate-500">
-                No saved scenes yet. Add them in the Scene Library.
-              </p>
-            ) : (
-              <ul className="flex max-h-72 flex-col gap-1.5 overflow-y-auto pr-1">
-                {scenes.map((sc) => {
-                  const isActive =
-                    activeSceneName === sc.name &&
-                    settings.video === `builtin:${sc.level}` &&
-                    Math.round(settings.start_sec) === Math.round(sc.start);
-                  return (
-                    <li
-                      key={sc.id}
-                      className={`flex items-center gap-2 rounded-lg border p-2 ${
-                        isActive ? "border-sky-500/50 bg-sky-500/5" : "border-slate-800"
-                      }`}
-                    >
-                      <button
-                        onClick={() => loadScene(sc)}
-                        className="min-w-0 flex-1 text-left"
-                        title="Load this segment into the config"
-                      >
-                        <div className="truncate text-sm text-slate-100">
-                          {sc.name || `scene @ ${sc.start.toFixed(1)}s`}
-                        </div>
-                        <div className="font-mono text-[11px] text-slate-500">
-                          L{sc.level} · {sc.start.toFixed(1)}–{sc.end.toFixed(1)}s
-                        </div>
-                      </button>
-                      <button
-                        onClick={() => runScene(sc)}
-                        disabled={busy}
-                        className="shrink-0 rounded-md border border-sky-700 px-2 py-1 text-xs text-sky-300 transition hover:bg-sky-900/40 disabled:opacity-40"
-                        title="Load and analyze now"
-                      >
-                        ▶ Run
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
+          {/* Asset debug — collapsed by default */}
+          <CollapsibleBlock title="Asset debug">
+            <AssetDebugPanel
+              selectedModelId={settings.model}
+              selectedVideoId={settings.video}
+              startSec={settings.start_sec}
+              durationSec={settings.duration_sec}
+              videos={videos}
+              scenes={scenes}
+            />
+          </CollapsibleBlock>
         </aside>
 
-        {/* Content */}
+        {/* Main content */}
         <section className="min-w-0">
           {busy && job && (
             <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-8">
@@ -353,8 +410,8 @@ export default function Home() {
                 />
               </div>
               <p className="mt-4 text-xs text-slate-500">
-                Running detection per frame on the selected segment. Larger
-                durations, smaller strides, and bigger models take longer.
+                Running detection per frame on the selected segment. Larger durations, smaller
+                strides, and bigger models take longer.
               </p>
             </div>
           )}
@@ -366,80 +423,16 @@ export default function Home() {
             </div>
           )}
 
-          {history.length > 0 && (
-            <div className="mb-4 rounded-2xl border border-slate-800 bg-slate-900/40 p-3">
-              <div className="mb-2 flex items-center justify-between">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Run history ({history.length})
-                </h3>
-                <div className="flex items-center gap-2">
-                  {IS_DEV && (
-                    <button
-                      onClick={saveCurrentHistoryAsDemo}
-                      className="text-[11px] text-sky-400 hover:text-sky-300"
-                      title="Write current local run history to public/demo-runs/history.json"
-                    >
-                      Save demo
-                    </button>
-                  )}
-                  <button
-                    onClick={() => {
-                      setHistory([]);
-                      setSelectedRunId(null);
-                    }}
-                    className="text-[11px] text-slate-500 hover:text-slate-300"
-                  >
-                    Clear
-                  </button>
-                </div>
-              </div>
-              {IS_DEV && demoSaveStatus && (
-                <p className="mb-2 rounded border border-slate-800 bg-slate-950/50 px-2 py-1 text-[11px] text-slate-400">
-                  {demoSaveStatus}
-                </p>
-              )}
-              <div className="flex gap-3 overflow-x-auto pb-1">
-                {history.map((r) => (
-                  <button
-                    key={r.id}
-                    onClick={() => setSelectedRunId(r.id)}
-                    className={`w-80 shrink-0 rounded-xl border p-3 text-left transition ${
-                      selectedRun?.id === r.id
-                        ? "border-sky-500/70 bg-sky-500/10"
-                        : "border-slate-800 hover:border-slate-600"
-                    }`}
-                    title={`${r.label} · ${r.model}`}
-                  >
-                    <div className="line-clamp-2 text-sm font-medium leading-snug text-slate-100">
-                      {r.label}
-                    </div>
-                    <div className="mt-1.5 rounded-lg border border-slate-800/80 bg-slate-950/40 px-2 py-1.5">
-                      <div className="text-[10px] uppercase tracking-wide text-slate-600">Model</div>
-                      <div className="break-words font-mono text-[11px] leading-snug text-slate-300">
-                        {r.model}
-                      </div>
-                    </div>
-                    <div className="mb-2 mt-1.5 flex items-center justify-between gap-2 font-mono text-[10px] text-slate-500">
-                      <span>
-                        {r.level != null ? `L${r.level} · ` : ""}
-                        {r.start.toFixed(0)}-{r.end.toFixed(0)}s
-                      </span>
-                      <span>{new Date(r.at).toLocaleTimeString()}</span>
-                    </div>
-                    <div className="overflow-hidden rounded-md border border-slate-800/60">
-                      <ConfidenceSparkline
-                        frames={r.result.frames}
-                        classColors={r.result.class_colors}
-                        height={44}
-                      />
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
+          {!busy && compareRuns && (
+            <CompareView
+              key={`${compareRuns.a.id}-${compareRuns.b.id}`}
+              runA={compareRuns.a}
+              runB={compareRuns.b}
+              onExit={() => setCompareRuns(null)}
+            />
           )}
 
-          {!busy && selectedRun && (
+          {!busy && !compareRuns && selectedRun && (
             <ResultView
               key={selectedRun.id}
               jobId={selectedRun.id}
@@ -455,14 +448,37 @@ export default function Home() {
                 Configure a segment, then Analyze
               </h2>
               <p className="mt-1 max-w-md text-sm text-slate-500">
-                Pick a model and video on the left, choose a start time and
-                duration, or pick a saved scene. Each run is kept here with its
-                confidence plot so you can compare over time.
+                Pick a model and video on the left, choose a start time and duration, or pick a
+                saved scene. Each run is kept here with its confidence plot so you can compare
+                over time.
               </p>
             </div>
           )}
         </section>
       </main>
+    </div>
+  );
+}
+
+function CollapsibleBlock({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mt-4 border-t border-slate-800 pt-3">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-400"
+      >
+        <span>{title}</span>
+        <span className="text-[10px] text-slate-600">{open ? "▲" : "▼"}</span>
+      </button>
+      {open && <div className="mt-2">{children}</div>}
     </div>
   );
 }
