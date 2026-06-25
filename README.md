@@ -12,6 +12,8 @@ Also: this whole app was built by absolute vibe coding. I did not manually write
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/admineral/SceneBench/main/public/screenshot.png" alt="Model comparison — side-by-side YOLO inference with confidence curves" width="900" />
+  <br /><br />
+  <img src="https://raw.githubusercontent.com/admineral/SceneBench/main/public/screenshot2.png" alt="Video inspector — detections, confidence curves, frame health, and events" width="900" />
 </p>
 
 ## What It Does
