@@ -36,12 +36,12 @@ function levelFromVideo(video: string): number | null {
 }
 
 const DEFAULT_SETTINGS: Settings = {
-  video: "",
+  video: "builtin:1",
   model: "",
   conf: 0.15,
   iou: 0.3,
   backend: "auto",
-  start_sec: 300,
+  start_sec: 0,
   duration_sec: 5,
   frame_stride: 1,
   bridge_gaps: false,
@@ -111,7 +111,12 @@ export default function Home() {
           ...s,
           model: s.model || preferredModel,
           conf: prefs.defaultConf || s.conf,
-          video: s.video || v.find((x) => x.source === "builtin")?.id || v[0]?.id || "",
+          video:
+            s.video ||
+            v.find((x) => x.id === "builtin:1")?.id ||
+            v.find((x) => x.source === "builtin")?.id ||
+            v[0]?.id ||
+            "",
         }));
       }
       return v;

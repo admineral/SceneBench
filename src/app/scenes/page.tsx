@@ -33,7 +33,7 @@ const QUICK_LABELS = [
 ];
 
 export default function ScenesPage() {
-  const [level, setLevel] = useState(2);
+  const [level, setLevel] = useState(1);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [selection, setSelection] = useState<Range | null>(null);
