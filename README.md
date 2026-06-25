@@ -7,7 +7,7 @@ It runs YOLO/ONNX models directly in the browser, lets you test them on curated 
 Think of it as a small benchmark lab mixed with an iMovie-style timeline: scrub through video, cut interesting scenes, save favourite clips, run inference, and compare model behaviour frame by frame.
 
 Also: this whole app was built by absolute vibe coding. I did not manually write a single line of code.
-
+![Model comparison — side-by-side YOLO inference with confidence curves](./public/screenshot.png)
 ## What It Does
 
 - Run ONNX object-detection models in the browser with ONNX Runtime Web.
