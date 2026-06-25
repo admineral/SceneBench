@@ -1,0 +1,28 @@
+{
+  "name": "scenebench-browser",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "build:scenes": "node scripts/build-scene-clips.mjs",
+    "start": "next start",
+    "lint": "eslint",
+    "postinstall": "node scripts/copy-ort-wasm.mjs"
+  },
+  "dependencies": {
+    "next": "^16.2.9",
+    "onnxruntime-web": "^1.27.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.1",
+    "@types/node": "^26.0.0",
+    "@types/react": "^19.2.17",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.2.9",
+    "tailwindcss": "^4.3.1",
+    "typescript": "^6.0.3"
+  }
+}

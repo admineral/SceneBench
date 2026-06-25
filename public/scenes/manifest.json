@@ -1,0 +1,978 @@
+{
+  "generated_at": "2026-06-24T20:02:19.996Z",
+  "scale": "640:-2",
+  "scenes": [
+    {
+      "id": "2d50e8f0a3",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "einzelnes auto",
+      "start": 34.6,
+      "end": 35.8,
+      "labels": [
+        "car_front"
+      ],
+      "notes": "",
+      "created_at": 1779993941.5116968,
+      "updated_at": 1780038771.010839,
+      "duration_sec": 1.2,
+      "clip_src": "/videos/scenes/level-2/2d50e8f0a3.mp4"
+    },
+    {
+      "id": "f15e092480",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "scene @ 756.2s",
+      "start": 756.2,
+      "end": 767,
+      "labels": [
+        "car_rear"
+      ],
+      "notes": "",
+      "created_at": 1779994736.621834,
+      "updated_at": 1779994736.621834,
+      "duration_sec": 10.8,
+      "clip_src": "/videos/scenes/level-2/f15e092480.mp4"
+    },
+    {
+      "id": "2263e224ab",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "scene @ 51.99s",
+      "start": 51.99,
+      "end": 53.19,
+      "labels": [
+        "car_front"
+      ],
+      "notes": "",
+      "created_at": 1780038323.0785851,
+      "updated_at": 1780038323.0785851,
+      "duration_sec": 1.2,
+      "clip_src": "/videos/scenes/level-2/2263e224ab.mp4"
+    },
+    {
+      "id": "02214f4aaa",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "mehrere cars",
+      "start": 50.5,
+      "end": 53.2,
+      "labels": [
+        "car_front"
+      ],
+      "notes": "",
+      "created_at": 1780039483.5866911,
+      "updated_at": 1780039523.213709,
+      "duration_sec": 2.7,
+      "clip_src": "/videos/scenes/level-2/02214f4aaa.mp4"
+    },
+    {
+      "id": "c55cd8cfab",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "scene @ 51.9932s",
+      "start": 51.993,
+      "end": 53.316,
+      "labels": [
+        "car_front"
+      ],
+      "notes": "",
+      "created_at": 1780039590.847114,
+      "updated_at": 1780039590.847114,
+      "duration_sec": 1.323,
+      "clip_src": "/videos/scenes/level-2/c55cd8cfab.mp4"
+    },
+    {
+      "id": "e21e434795",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "einzelnes licht auto",
+      "start": 59.245,
+      "end": 60.13,
+      "labels": [
+        "car_front"
+      ],
+      "notes": "",
+      "created_at": 1780039648.982377,
+      "updated_at": 1780039648.982377,
+      "duration_sec": 0.885,
+      "clip_src": "/videos/scenes/level-2/e21e434795.mp4"
+    },
+    {
+      "id": "062e1d2d74",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "einzlenes car ampel",
+      "start": 92.7,
+      "end": 94,
+      "labels": [
+        "car_rear"
+      ],
+      "notes": "",
+      "created_at": 1780039968.890406,
+      "updated_at": 1780039968.890406,
+      "duration_sec": 1.3,
+      "clip_src": "/videos/scenes/level-2/062e1d2d74.mp4"
+    },
+    {
+      "id": "e536b9cbed",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "kreisverkehr",
+      "start": 281.448,
+      "end": 284.53,
+      "labels": [
+        "car_rear"
+      ],
+      "notes": "",
+      "created_at": 1780040411.752967,
+      "updated_at": 1780040411.752967,
+      "duration_sec": 3.082,
+      "clip_src": "/videos/scenes/level-2/e536b9cbed.mp4"
+    },
+    {
+      "id": "30a214877f",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "auto ausfahrt tunnel bester",
+      "start": 321.2,
+      "end": 330.007,
+      "labels": [
+        "car_rear",
+        "good long"
+      ],
+      "notes": "",
+      "created_at": 1780040574.745738,
+      "updated_at": 1780040574.745738,
+      "duration_sec": 8.807,
+      "clip_src": "/videos/scenes/level-2/30a214877f.mp4"
+    },
+    {
+      "id": "dcdf86b98e",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "police car",
+      "start": 338.2,
+      "end": 344,
+      "labels": [
+        "car_rear"
+      ],
+      "notes": "",
+      "created_at": 1780041435.768954,
+      "updated_at": 1780041435.768954,
+      "duration_sec": 5.8,
+      "clip_src": "/videos/scenes/level-2/dcdf86b98e.mp4"
+    },
+    {
+      "id": "95ce7e7e8e",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "landstraße dunkel",
+      "start": 387.3,
+      "end": 388.1,
+      "labels": [
+        "car_front"
+      ],
+      "notes": "",
+      "created_at": 1780041583.046249,
+      "updated_at": 1780041583.046249,
+      "duration_sec": 0.8,
+      "clip_src": "/videos/scenes/level-2/95ce7e7e8e.mp4"
+    },
+    {
+      "id": "b186197e4a",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "car side inc",
+      "start": 395.7,
+      "end": 396.5,
+      "labels": [
+        "car_front"
+      ],
+      "notes": "",
+      "created_at": 1780041968.1033971,
+      "updated_at": 1780041968.1033971,
+      "duration_sec": 0.8,
+      "clip_src": "/videos/scenes/level-2/b186197e4a.mp4"
+    },
+    {
+      "id": "0f7ced41e4",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "bad exmple switch class",
+      "start": 486.1,
+      "end": 488.6,
+      "labels": [
+        "car_front"
+      ],
+      "notes": "",
+      "created_at": 1780042228.477963,
+      "updated_at": 1780042228.477963,
+      "duration_sec": 2.5,
+      "clip_src": "/videos/scenes/level-2/0f7ced41e4.mp4"
+    },
+    {
+      "id": "a243fbe636",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "LKW",
+      "start": 536.499,
+      "end": 542,
+      "labels": [
+        "lwk_rear"
+      ],
+      "notes": "",
+      "created_at": 1780042391.868851,
+      "updated_at": 1780042391.868851,
+      "duration_sec": 5.501,
+      "clip_src": "/videos/scenes/level-2/a243fbe636.mp4"
+    },
+    {
+      "id": "f54fa57a4a",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "lkw",
+      "start": 565.2,
+      "end": 567.1,
+      "labels": [
+        "lwk"
+      ],
+      "notes": "",
+      "created_at": 1780042970.928282,
+      "updated_at": 1780042970.928282,
+      "duration_sec": 1.9,
+      "clip_src": "/videos/scenes/level-2/f54fa57a4a.mp4"
+    },
+    {
+      "id": "ddc0d8dec4",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "schwere sicht",
+      "start": 586.2,
+      "end": 587.2,
+      "labels": [
+        "car_front",
+        "hard"
+      ],
+      "notes": "",
+      "created_at": 1780043105.684853,
+      "updated_at": 1780043105.684853,
+      "duration_sec": 1,
+      "clip_src": "/videos/scenes/level-2/ddc0d8dec4.mp4"
+    },
+    {
+      "id": "aaf392235e",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "car foggy",
+      "start": 592,
+      "end": 593.485,
+      "labels": [
+        "hard"
+      ],
+      "notes": "",
+      "created_at": 1780043218.294513,
+      "updated_at": 1780043218.294513,
+      "duration_sec": 1.485,
+      "clip_src": "/videos/scenes/level-2/aaf392235e.mp4"
+    },
+    {
+      "id": "396e1f20f5",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "foggy ferne",
+      "start": 598.425,
+      "end": 600.028,
+      "labels": [
+        "car_front",
+        "hard"
+      ],
+      "notes": "",
+      "created_at": 1780043307.302349,
+      "updated_at": 1780043307.302349,
+      "duration_sec": 1.603,
+      "clip_src": "/videos/scenes/level-2/396e1f20f5.mp4"
+    },
+    {
+      "id": "4947063420",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "very hard foggy",
+      "start": 610.749,
+      "end": 611.52,
+      "labels": [
+        "car_front",
+        "very hard"
+      ],
+      "notes": "",
+      "created_at": 1780043434.963681,
+      "updated_at": 1780043434.963681,
+      "duration_sec": 0.771,
+      "clip_src": "/videos/scenes/level-2/4947063420.mp4"
+    },
+    {
+      "id": "f52f286669",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "easy foggy",
+      "start": 626.07,
+      "end": 626.503,
+      "labels": [
+        "car_front"
+      ],
+      "notes": "",
+      "created_at": 1780043490.555857,
+      "updated_at": 1780043490.555857,
+      "duration_sec": 0.433,
+      "clip_src": "/videos/scenes/level-2/f52f286669.mp4"
+    },
+    {
+      "id": "79b7fbca90",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "easy foggy",
+      "start": 635.668,
+      "end": 637.1,
+      "labels": [
+        "car_front"
+      ],
+      "notes": "",
+      "created_at": 1780043563.6667478,
+      "updated_at": 1780043563.6667478,
+      "duration_sec": 1.432,
+      "clip_src": "/videos/scenes/level-2/79b7fbca90.mp4"
+    },
+    {
+      "id": "97d33d1bc8",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "gut",
+      "start": 668.6,
+      "end": 669,
+      "labels": [
+        "car_front"
+      ],
+      "notes": "",
+      "created_at": 1780043682.97329,
+      "updated_at": 1780043682.97329,
+      "duration_sec": 0.4,
+      "clip_src": "/videos/scenes/level-2/97d33d1bc8.mp4"
+    },
+    {
+      "id": "9990dece8a",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "gut sharan",
+      "start": 700.759,
+      "end": 701.7,
+      "labels": [
+        "car_rear"
+      ],
+      "notes": "",
+      "created_at": 1780043823.516427,
+      "updated_at": 1780043823.516427,
+      "duration_sec": 0.941,
+      "clip_src": "/videos/scenes/level-2/9990dece8a.mp4"
+    },
+    {
+      "id": "c23fff55eb",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "bridge",
+      "start": 709.9,
+      "end": 717.8,
+      "labels": [
+        "car_rear"
+      ],
+      "notes": "",
+      "created_at": 1780043939.075354,
+      "updated_at": 1780043939.075354,
+      "duration_sec": 7.9,
+      "clip_src": "/videos/scenes/level-2/c23fff55eb.mp4"
+    },
+    {
+      "id": "f012cda022",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "ferne",
+      "start": 751.401,
+      "end": 756,
+      "labels": [
+        "car_rear"
+      ],
+      "notes": "",
+      "created_at": 1780044150.268686,
+      "updated_at": 1780044150.268686,
+      "duration_sec": 4.599,
+      "clip_src": "/videos/scenes/level-2/f012cda022.mp4"
+    },
+    {
+      "id": "14a649eade",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "very good",
+      "start": 770,
+      "end": 782,
+      "labels": [
+        "car_rear"
+      ],
+      "notes": "",
+      "created_at": 1780044433.3362792,
+      "updated_at": 1780044433.3362792,
+      "duration_sec": 12,
+      "clip_src": "/videos/scenes/level-2/14a649eade.mp4"
+    },
+    {
+      "id": "feeeac2e2d",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "very good",
+      "start": 788.2,
+      "end": 790.1,
+      "labels": [
+        "car_rear"
+      ],
+      "notes": "",
+      "created_at": 1780044576.3806028,
+      "updated_at": 1780044576.3806028,
+      "duration_sec": 1.9,
+      "clip_src": "/videos/scenes/level-2/feeeac2e2d.mp4"
+    },
+    {
+      "id": "782448765b",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "foggy autobahn",
+      "start": 831.307,
+      "end": 834.61,
+      "labels": [
+        "car_rear",
+        "hard"
+      ],
+      "notes": "",
+      "created_at": 1780044717.660814,
+      "updated_at": 1780044717.660814,
+      "duration_sec": 3.303,
+      "clip_src": "/videos/scenes/level-2/782448765b.mp4"
+    },
+    {
+      "id": "cf7bcd7fdd",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "very foggy",
+      "start": 880.501,
+      "end": 884,
+      "labels": [
+        "car_rear",
+        "very hard but good"
+      ],
+      "notes": "",
+      "created_at": 1780044918.898517,
+      "updated_at": 1780044918.898517,
+      "duration_sec": 3.499,
+      "clip_src": "/videos/scenes/level-2/cf7bcd7fdd.mp4"
+    },
+    {
+      "id": "9e693872f7",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "zero1",
+      "start": 932.835,
+      "end": 934.99,
+      "labels": [
+        "car_front",
+        "veryveryhard"
+      ],
+      "notes": "",
+      "created_at": 1780045088.048439,
+      "updated_at": 1780045088.048439,
+      "duration_sec": 2.155,
+      "clip_src": "/videos/scenes/level-2/9e693872f7.mp4"
+    },
+    {
+      "id": "6f8dcf0c21",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "bridge gaps example",
+      "start": 954.987,
+      "end": 956.416,
+      "labels": [
+        "car_rear"
+      ],
+      "notes": "",
+      "created_at": 1780045211.684372,
+      "updated_at": 1780045211.684372,
+      "duration_sec": 1.429,
+      "clip_src": "/videos/scenes/level-2/6f8dcf0c21.mp4"
+    },
+    {
+      "id": "202be0e9c8",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "good blurry one",
+      "start": 971.578,
+      "end": 972.6,
+      "labels": [
+        "car_front"
+      ],
+      "notes": "",
+      "created_at": 1780045281.09704,
+      "updated_at": 1780045281.09704,
+      "duration_sec": 1.022,
+      "clip_src": "/videos/scenes/level-2/202be0e9c8.mp4"
+    },
+    {
+      "id": "a53bc40f70",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "good one",
+      "start": 1013.8,
+      "end": 1018.285,
+      "labels": [
+        "car_rear"
+      ],
+      "notes": "",
+      "created_at": 1780045413.3958411,
+      "updated_at": 1780045413.3958411,
+      "duration_sec": 4.485,
+      "clip_src": "/videos/scenes/level-2/a53bc40f70.mp4"
+    },
+    {
+      "id": "5fd9898e8c",
+      "level": 2,
+      "video_filename": "vid.mp4",
+      "name": "hard",
+      "start": 1032.827,
+      "end": 1037.228,
+      "labels": [
+        "car_rear"
+      ],
+      "notes": "",
+      "created_at": 1780045507.3394601,
+      "updated_at": 1780045507.3394601,
+      "duration_sec": 4.401,
+      "clip_src": "/videos/scenes/level-2/5fd9898e8c.mp4"
+    },
+    {
+      "id": "fdd832ca64",
+      "level": 1,
+      "video_filename": "Lvl1.mp4",
+      "name": "good",
+      "start": 3.292,
+      "end": 5.234,
+      "labels": [
+        "car_front",
+        "easy"
+      ],
+      "notes": "",
+      "created_at": 1780045620.3986182,
+      "updated_at": 1780045620.3986182,
+      "duration_sec": 1.942,
+      "clip_src": "/videos/scenes/level-1/fdd832ca64.mp4"
+    },
+    {
+      "id": "38fa2fa432",
+      "level": 1,
+      "video_filename": "Lvl1.mp4",
+      "name": "BUS",
+      "start": 10.5,
+      "end": 11.148,
+      "labels": [
+        "car_front",
+        "bus"
+      ],
+      "notes": "",
+      "created_at": 1780045741.235235,
+      "updated_at": 1780045741.235235,
+      "duration_sec": 0.648,
+      "clip_src": "/videos/scenes/level-1/38fa2fa432.mp4"
+    },
+    {
+      "id": "a1ee61e7af",
+      "level": 1,
+      "video_filename": "Lvl1.mp4",
+      "name": "hard",
+      "start": 28.8,
+      "end": 36,
+      "labels": [
+        "car_rear"
+      ],
+      "notes": "",
+      "created_at": 1780045860.0606668,
+      "updated_at": 1780045860.0606668,
+      "duration_sec": 7.2,
+      "clip_src": "/videos/scenes/level-1/a1ee61e7af.mp4"
+    },
+    {
+      "id": "f3bb61f1c7",
+      "level": 1,
+      "video_filename": "Lvl1.mp4",
+      "name": "best",
+      "start": 47,
+      "end": 61.225,
+      "labels": [
+        "car_rear"
+      ],
+      "notes": "",
+      "created_at": 1780045996.004569,
+      "updated_at": 1780045996.004569,
+      "duration_sec": 14.225,
+      "clip_src": "/videos/scenes/level-1/f3bb61f1c7.mp4"
+    },
+    {
+      "id": "dbd0cb457c",
+      "level": 1,
+      "video_filename": "Lvl1.mp4",
+      "name": "LKW",
+      "start": 68.6,
+      "end": 73,
+      "labels": [
+        "car_rear"
+      ],
+      "notes": "",
+      "created_at": 1780046098.433398,
+      "updated_at": 1780046098.433398,
+      "duration_sec": 4.4,
+      "clip_src": "/videos/scenes/level-1/dbd0cb457c.mp4"
+    },
+    {
+      "id": "610d821b8a",
+      "level": 1,
+      "video_filename": "Lvl1.mp4",
+      "name": "lkw",
+      "start": 86.694,
+      "end": 93.427,
+      "labels": [
+        "car_rear",
+        "goodeasy"
+      ],
+      "notes": "",
+      "created_at": 1780046152.677025,
+      "updated_at": 1780046152.677025,
+      "duration_sec": 6.733,
+      "clip_src": "/videos/scenes/level-1/610d821b8a.mp4"
+    },
+    {
+      "id": "ce79172408",
+      "level": 1,
+      "video_filename": "Lvl1.mp4",
+      "name": "easy",
+      "start": 132.577,
+      "end": 133.421,
+      "labels": [
+        "car_rear"
+      ],
+      "notes": "",
+      "created_at": 1780046218.598182,
+      "updated_at": 1780046218.598182,
+      "duration_sec": 0.844,
+      "clip_src": "/videos/scenes/level-1/ce79172408.mp4"
+    },
+    {
+      "id": "8d676236f3",
+      "level": 1,
+      "video_filename": "Lvl1.mp4",
+      "name": "lkw",
+      "start": 141.157,
+      "end": 143.955,
+      "labels": [
+        "car_front"
+      ],
+      "notes": "",
+      "created_at": 1780046263.919062,
+      "updated_at": 1780046263.919062,
+      "duration_sec": 2.798,
+      "clip_src": "/videos/scenes/level-1/8d676236f3.mp4"
+    },
+    {
+      "id": "c3c189bfd0",
+      "level": 1,
+      "video_filename": "Lvl1.mp4",
+      "name": "easy",
+      "start": 151.7,
+      "end": 154.7,
+      "labels": [
+        "car_front"
+      ],
+      "notes": "",
+      "created_at": 1780046324.8891468,
+      "updated_at": 1780046324.8891468,
+      "duration_sec": 3,
+      "clip_src": "/videos/scenes/level-1/c3c189bfd0.mp4"
+    },
+    {
+      "id": "ae64c1345d",
+      "level": 1,
+      "video_filename": "Lvl1.mp4",
+      "name": "good example",
+      "start": 181.201,
+      "end": 190.7,
+      "labels": [
+        "car_rear"
+      ],
+      "notes": "",
+      "created_at": 1780046424.10643,
+      "updated_at": 1780046424.10643,
+      "duration_sec": 9.499,
+      "clip_src": "/videos/scenes/level-1/ae64c1345d.mp4"
+    },
+    {
+      "id": "0ece4efe67",
+      "level": 1,
+      "video_filename": "Lvl1.mp4",
+      "name": "scene @ 205.513s",
+      "start": 205.513,
+      "end": 206.076,
+      "labels": [
+        "car_front"
+      ],
+      "notes": "",
+      "created_at": 1780046584.2364612,
+      "updated_at": 1780046584.2364612,
+      "duration_sec": 0.563,
+      "clip_src": "/videos/scenes/level-1/0ece4efe67.mp4"
+    },
+    {
+      "id": "3880f9dab1",
+      "level": 1,
+      "video_filename": "Lvl1.mp4",
+      "name": "kurve",
+      "start": 206.8,
+      "end": 209.9,
+      "labels": [
+        "car_front",
+        "hard"
+      ],
+      "notes": "",
+      "created_at": 1780046689.97839,
+      "updated_at": 1780046689.97839,
+      "duration_sec": 3.1,
+      "clip_src": "/videos/scenes/level-1/3880f9dab1.mp4"
+    },
+    {
+      "id": "9bd8bc10b3",
+      "level": 3,
+      "video_filename": "Level_3.mp4",
+      "name": "good",
+      "start": 5.409,
+      "end": 12,
+      "labels": [
+        "car_rear"
+      ],
+      "notes": "",
+      "created_at": 1780047017.7397308,
+      "updated_at": 1780047017.7397308,
+      "duration_sec": 6.591,
+      "clip_src": "/videos/scenes/level-3/9bd8bc10b3.mp4"
+    },
+    {
+      "id": "96657bca86",
+      "level": 3,
+      "video_filename": "Level_3.mp4",
+      "name": "hard",
+      "start": 31.499,
+      "end": 38,
+      "labels": [
+        "car_rear"
+      ],
+      "notes": "",
+      "created_at": 1780047091.7504299,
+      "updated_at": 1780047091.7504299,
+      "duration_sec": 6.501,
+      "clip_src": "/videos/scenes/level-3/96657bca86.mp4"
+    },
+    {
+      "id": "5631eadd16",
+      "level": 3,
+      "video_filename": "Level_3.mp4",
+      "name": "verschwommen hard aber easy",
+      "start": 42.785,
+      "end": 47.2,
+      "labels": [
+        "car_rear"
+      ],
+      "notes": "",
+      "created_at": 1780047163.331188,
+      "updated_at": 1780047163.331188,
+      "duration_sec": 4.415,
+      "clip_src": "/videos/scenes/level-3/5631eadd16.mp4"
+    },
+    {
+      "id": "aff9264118",
+      "level": 3,
+      "video_filename": "Level_3.mp4",
+      "name": "hard one stable",
+      "start": 56.92,
+      "end": 78,
+      "labels": [
+        "car_rear"
+      ],
+      "notes": "",
+      "created_at": 1780047263.0663738,
+      "updated_at": 1780047307.064097,
+      "duration_sec": 21.08,
+      "clip_src": "/videos/scenes/level-3/aff9264118.mp4"
+    },
+    {
+      "id": "3e61701d0b",
+      "level": 3,
+      "video_filename": "Level_3.mp4",
+      "name": "scene @ 93.5826s",
+      "start": 93.583,
+      "end": 93.99,
+      "labels": [
+        "car_front"
+      ],
+      "notes": "",
+      "created_at": 1780047374.4831638,
+      "updated_at": 1780047374.4831638,
+      "duration_sec": 0.407,
+      "clip_src": "/videos/scenes/level-3/3e61701d0b.mp4"
+    },
+    {
+      "id": "65f789a11a",
+      "level": 3,
+      "video_filename": "Level_3.mp4",
+      "name": "scene @ 97.9739s",
+      "start": 97.974,
+      "end": 100.057,
+      "labels": [
+        "car_front"
+      ],
+      "notes": "",
+      "created_at": 1780047415.2120068,
+      "updated_at": 1780047415.2120068,
+      "duration_sec": 2.083,
+      "clip_src": "/videos/scenes/level-3/65f789a11a.mp4"
+    },
+    {
+      "id": "4f2ecbd4f1",
+      "level": 3,
+      "video_filename": "Level_3.mp4",
+      "name": "scene @ 102.668s",
+      "start": 102.668,
+      "end": 104.5,
+      "labels": [
+        "car_front"
+      ],
+      "notes": "",
+      "created_at": 1780047440.936578,
+      "updated_at": 1780047440.936578,
+      "duration_sec": 1.832,
+      "clip_src": "/videos/scenes/level-3/4f2ecbd4f1.mp4"
+    },
+    {
+      "id": "3a94ed101e",
+      "level": 3,
+      "video_filename": "Level_3.mp4",
+      "name": "LKW",
+      "start": 267.468,
+      "end": 269.528,
+      "labels": [
+        "car_front"
+      ],
+      "notes": "",
+      "created_at": 1780047756.085441,
+      "updated_at": 1780047756.085441,
+      "duration_sec": 2.06,
+      "clip_src": "/videos/scenes/level-3/3a94ed101e.mp4"
+    },
+    {
+      "id": "66ffe88d69",
+      "level": 3,
+      "video_filename": "Level_3.mp4",
+      "name": "hard",
+      "start": 287.241,
+      "end": 289.6,
+      "labels": [
+        "car_front"
+      ],
+      "notes": "",
+      "created_at": 1780047844.815289,
+      "updated_at": 1780047844.815289,
+      "duration_sec": 2.359,
+      "clip_src": "/videos/scenes/level-3/66ffe88d69.mp4"
+    },
+    {
+      "id": "13ea5fbfee",
+      "level": 3,
+      "video_filename": "Level_3.mp4",
+      "name": "hard",
+      "start": 302.881,
+      "end": 303.807,
+      "labels": [
+        "car_front"
+      ],
+      "notes": "",
+      "created_at": 1780047887.660017,
+      "updated_at": 1780047887.660017,
+      "duration_sec": 0.926,
+      "clip_src": "/videos/scenes/level-3/13ea5fbfee.mp4"
+    },
+    {
+      "id": "cef460e8e5",
+      "level": 3,
+      "video_filename": "Level_3.mp4",
+      "name": "good",
+      "start": 325.018,
+      "end": 328.002,
+      "labels": [
+        "car_front"
+      ],
+      "notes": "",
+      "created_at": 1780048004.141666,
+      "updated_at": 1780048004.141666,
+      "duration_sec": 2.984,
+      "clip_src": "/videos/scenes/level-3/cef460e8e5.mp4"
+    },
+    {
+      "id": "f975c58060",
+      "level": 3,
+      "video_filename": "Level_3.mp4",
+      "name": "good",
+      "start": 352.219,
+      "end": 355,
+      "labels": [
+        "car_front"
+      ],
+      "notes": "",
+      "created_at": 1780048073.518632,
+      "updated_at": 1780048073.518632,
+      "duration_sec": 2.781,
+      "clip_src": "/videos/scenes/level-3/f975c58060.mp4"
+    },
+    {
+      "id": "5542b29242",
+      "level": 3,
+      "video_filename": "Level_3.mp4",
+      "name": "scene @ 386.5s",
+      "start": 386.5,
+      "end": 387.5,
+      "labels": [
+        "car_front"
+      ],
+      "notes": "",
+      "created_at": 1780048163.3463612,
+      "updated_at": 1780048163.3463612,
+      "duration_sec": 1,
+      "clip_src": "/videos/scenes/level-3/5542b29242.mp4"
+    },
+    {
+      "id": "b53578912e",
+      "level": 3,
+      "video_filename": "Level_3.mp4",
+      "name": "scene @ 390.467s",
+      "start": 390.467,
+      "end": 393.072,
+      "labels": [
+        "car_front"
+      ],
+      "notes": "",
+      "created_at": 1780048201.796685,
+      "updated_at": 1780048201.796685,
+      "duration_sec": 2.605,
+      "clip_src": "/videos/scenes/level-3/b53578912e.mp4"
+    }
+  ],
+  "skipped": []
+}
