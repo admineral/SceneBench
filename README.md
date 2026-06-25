@@ -1,5 +1,7 @@
 # SceneBench
 
+**Live demo:** [scene-bench.vercel.app](https://scene-bench.vercel.app)
+
 SceneBench is a browser-based benchmark and inspection tool for comparing object-detection models on video clips.
 
 It runs YOLO/ONNX models directly in the browser, lets you test them on curated scene clips, and shows what the model is doing over time: detections, confidence curves, tracking state, car tracking, health scores, dropouts, switches, and unstable moments.
@@ -39,6 +41,8 @@ Instead of only asking “did the model detect a car?”, the app helps answer:
 - Which scenes are worth saving as benchmark cases?
 
 ## Quick Start
+
+Try the live demo at [scene-bench.vercel.app](https://scene-bench.vercel.app), or run locally.
 
 You need Node.js installed. Then:
 
